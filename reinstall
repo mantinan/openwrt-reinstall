@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2021 Santiago Garcia Mantinan (manty)
+
+# This script should be /etc/init.d/reinstall
+# For this to work, we should add to /etc/sysupgrade.conf without the "#":
+#/etc/init.d/reinstall
+#/etc/rc.d/S99reinstall
+#/etc/reinstall.conf
+# and before doing the sysupgrade to the new version we should run:
+#/etc/init.d/reinstall enable
+# The script will log the actions and result and disable itself.
+# In reinstall.conf we specify the extra packages to install (one per line)
+# or to disable if their name starts with a -
+
+START=99
+
+start() {
+LOG=/root/reinstall.log
+(
+. /etc/profile
+STATE="Something went wrong, manually run: /etc/init.d/reinstall start"
+# Wait till we are stable
+sleep 10
+i=10;while [ $i -gt 0 ] && ! wget http://www.google.com -O /dev/null;do sleep 10;i=$((i-1));done
+date
+opkg update &&
+while read i;do
+  if [ "$i" = "wpad" ];then
+    echo "Getting ready to install full wpad by removing the lite ones"
+    opkg remove wpad-basic wpad-basic-wolfssl
+  fi
+  if [ ! "${i%%-*}" ];then
+    echo "Disabling $i"
+    /etc/init.d/${i#-} disable
+  else
+    echo "Installing $i"
+    opkg install $i
+  fi
+  done </etc/reinstall.conf &&
+STATE="Everything went Ok, reinstall has finished without errors."
+echo  "$STATE"
+/etc/init.d/reinstall disable
+reboot
+) >"$LOG" 2>&1 </dev/null &
+}
