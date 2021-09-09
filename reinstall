@@ -24,26 +24,26 @@ sleep 10
 i=10;while [ $i -gt 0 ] && ! wget http://www.google.com -O /dev/null;do sleep 10;i=$((i-1));done
 date
 opkg update &&
-while read i;do
-  if [ "$i" = "wpad" ];then
-    echo "Getting ready to install full wpad by removing the lite ones"
-    opkg remove wpad-basic wpad-basic-wolfssl
-  fi
-  if [ ! "${i%%-*}" ];then
-    if [ ! "${i%%-/*}" ];then
-      echo "Removing ${i#-}"
-      rm -f "${i#-}"
-    else
-      echo "Disabling ${i#-}"
-      /etc/init.d/"${i#-}" stop
-      /etc/init.d/"${i#-}" disable
-    fi
-  else
-    echo "Installing $i"
-    opkg install "$i"
-  fi
-  done </etc/reinstall.conf &&
-STATE="Everything went Ok, reinstall has finished without errors."
+  grep -v "^[[:space:]]*#" /etc/reinstall.conf |
+    while read i;do
+      if [ "$i" = "wpad" ];then
+        echo "Getting ready to install full wpad by removing the lite ones"
+        opkg remove wpad-basic wpad-basic-wolfssl
+      fi
+      if [ ! "${i%%-*}" ];then
+        if [ ! "${i%%-/*}" ];then
+          echo "Removing ${i#-}"
+          rm -f "${i#-}"
+        else
+          echo "Disabling ${i#-}"
+          /etc/init.d/"${i#-}" stop
+          /etc/init.d/"${i#-}" disable
+        fi
+      else
+        echo "Installing $i"
+        opkg install "$i"
+      fi
+    done && STATE="Everything went Ok, reinstall has finished without errors."
 echo  "$STATE"
 /etc/init.d/reinstall disable
 reboot
