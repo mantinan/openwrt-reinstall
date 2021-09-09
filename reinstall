@@ -30,11 +30,17 @@ while read i;do
     opkg remove wpad-basic wpad-basic-wolfssl
   fi
   if [ ! "${i%%-*}" ];then
-    echo "Disabling $i"
-    /etc/init.d/${i#-} disable
+    if [ ! "${i%%-/*}" ];then
+      echo "Removing ${i#-}"
+      rm -f "${i#-}"
+    else
+      echo "Disabling ${i#-}"
+      /etc/init.d/"${i#-}" stop
+      /etc/init.d/"${i#-}" disable
+    fi
   else
     echo "Installing $i"
-    opkg install $i
+    opkg install "$i"
   fi
   done </etc/reinstall.conf &&
 STATE="Everything went Ok, reinstall has finished without errors."
