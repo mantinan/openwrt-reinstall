@@ -28,7 +28,7 @@ opkg update &&
     while read i;do
       if [ "$i" = "wpad" ];then
         echo "Getting ready to install full wpad by removing the lite ones"
-        opkg remove wpad-basic wpad-basic-wolfssl
+        opkg remove wpad-basic wpad-basic-wolfssl wpad-basic-mbedtls
       fi
       if [ ! "${i%%-*}" ];then
         if [ ! "${i%%-/*}" ];then
