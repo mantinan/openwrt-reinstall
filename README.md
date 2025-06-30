@@ -12,4 +12,8 @@ file and enabling the reinstall service before doing the sysupgrade.
 More info on my initial post on reinstall on my blog at:
 http://blog.manty.net/2021/08/openwrt-dist-upgrade-or-how-to-update.html
 
-Last tested on OpenWrt 24.10
+Current version stores package status and implements check parameter to
+output those packages that were not installed last time reinstall was run,
+so that you may add them to the config file before upgrading.
+
+Last tested on OpenWrt 24.10.2

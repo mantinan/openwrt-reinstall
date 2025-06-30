@@ -13,9 +13,12 @@
 # or to disable if their name starts with a -
 
 START=99
+extra_command "check" "New installed packages since last reinstall"
+
+REINSTALL_LOG=/root/reinstall.log
+REINSTALL_STATUS=/root/reinstall.status
 
 start() {
-LOG=/root/reinstall.log
 (
 . /etc/profile
 STATE="Something went wrong, manually run: /etc/init.d/reinstall start"
@@ -43,9 +46,19 @@ opkg update &&
         echo "Installing $i"
         opkg install "$i"
       fi
-    done && STATE="Everything went Ok, reinstall has finished without errors."
+    done && STATE="Everything went Ok, reinstall has finished without errors." && opkg list-installed > "$REINSTALL_STATUS"
 echo  "$STATE"
 /etc/init.d/reinstall disable
 reboot
-) >"$LOG" 2>&1 </dev/null &
+) >"$REINSTALL_LOG" 2>&1 </dev/null &
+}
+
+check() {
+if [ -f "$REINSTALL_STATUS" ]
+then
+  echo Checking for new installed packages since last reinstall...
+  opkg list-installed|while read package rest;do if ! grep -q "^$package" "$REINSTALL_STATUS";then echo $package;fi;done
+else
+  echo "Missing $REINSTALL_STATUS, cannot check, sorry."
+fi
 }
