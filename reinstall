@@ -14,6 +14,7 @@
 
 START=99
 extra_command "check" "New installed packages since last reinstall"
+extra_command "chen" "Check new packages and enable autostart"
 
 REINSTALL_LOG=/root/reinstall.log
 REINSTALL_STATUS=/root/reinstall.status
@@ -24,27 +25,27 @@ start() {
 STATE="Something went wrong, manually run: /etc/init.d/reinstall start"
 # Wait till we are stable
 sleep 10
-i=10;while [ $i -gt 0 ] && ! wget http://www.google.com -O /dev/null;do sleep 10;i=$((i-1));done
+wait=10;while [ $wait -gt 0 ] && ! wget http://www.google.com -O /dev/null;do sleep 10;wait=$((wait-1));done
 date
 opkg update &&
   grep -v "^[[:space:]]*#" /etc/reinstall.conf |
-    while read i;do
-      if [ "$i" = "wpad" ];then
+    while read package;do
+      if [ "$package" = "wpad" ];then
         echo "Getting ready to install full wpad by removing the lite ones"
         opkg remove wpad-basic wpad-basic-wolfssl wpad-basic-mbedtls
       fi
-      if [ ! "${i%%-*}" ];then
-        if [ ! "${i%%-/*}" ];then
-          echo "Removing ${i#-}"
-          rm -f "${i#-}"
+      if [ ! "${package%%-*}" ];then
+        if [ ! "${package%%-/*}" ];then
+          echo "Removing ${package#-}"
+          rm -f "${package#-}"
         else
-          echo "Disabling ${i#-}"
-          /etc/init.d/"${i#-}" stop
-          /etc/init.d/"${i#-}" disable
+          echo "Disabling ${package#-}"
+          /etc/init.d/"${package#-}" stop
+          /etc/init.d/"${package#-}" disable
         fi
       else
-        echo "Installing $i"
-        opkg install "$i"
+        echo "Installing $package"
+        opkg install "$package"
       fi
     done && STATE="Everything went Ok, reinstall has finished without errors." && opkg list-installed > "$REINSTALL_STATUS"
 echo  "$STATE"
@@ -61,4 +62,9 @@ then
 else
   echo "Missing $REINSTALL_STATUS, cannot check, sorry."
 fi
+}
+
+chen() {
+check
+enable && echo Enabled, will run on boot and self disable.
 }
