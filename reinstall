@@ -32,7 +32,7 @@ sleep 10
 wait=10;while [ $wait -gt 0 ] && ! wget http://www.google.com -O /dev/null;do sleep 10;wait=$((wait-1));done
 date
 opkg update &&
-  grep -v "^[[:space:]]*#" "$REINSTALL_CONF" |
+  egrep -v "^[[:space:]]*(#|$)" "$REINSTALL_CONF" |
     while read package;do
       if [ "$package" = "wpad" ];then
         echo "Getting ready to install full wpad by removing the lite ones"
