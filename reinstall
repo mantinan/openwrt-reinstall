@@ -55,13 +55,12 @@ reboot
 }
 
 check() {
-if [ -f "$REINSTALL_STATUS" ]
+if [ ! -f "$REINSTALL_STATUS" ]
 then
-  echo Checking for new installed packages since last reinstall...
-  opkg list-installed|while read package rest;do if opkg status "$package"|grep -q "Status: install user installed";then echo "$package";fi;done | while read package rest;do if ! grep -q "^$package" "$REINSTALL_STATUS";then echo "$package";fi;done
-else
-  echo "Missing $REINSTALL_STATUS, cannot check, sorry."
+  REINSTALL_STATUS="/dev/null"
 fi
+echo Checking for new installed packages since last reinstall...
+opkg list-installed|while read package rest;do if opkg status "$package"|grep -q "Status: install user installed";then echo "$package";fi;done | while read package rest;do if ! grep -q "^$package" "$REINSTALL_STATUS";then echo "$package";fi;done
 }
 
 chen() {
