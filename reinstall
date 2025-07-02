@@ -16,8 +16,12 @@ START=99
 extra_command "check" "New installed packages since last reinstall"
 extra_command "chen" "Check new packages and enable autostart"
 
+REINSTALL_CONF=/etc/reinstall.conf
 REINSTALL_LOG=/root/reinstall.log
-REINSTALL_STATUS=/root/reinstall.status
+if [ ! -e "$REINSTALL_CONF" ]
+then
+  REINSTALL_CONF="/dev/null"
+fi
 
 start() {
 (
@@ -28,7 +32,7 @@ sleep 10
 wait=10;while [ $wait -gt 0 ] && ! wget http://www.google.com -O /dev/null;do sleep 10;wait=$((wait-1));done
 date
 opkg update &&
-  grep -v "^[[:space:]]*#" /etc/reinstall.conf |
+  grep -v "^[[:space:]]*#" "$REINSTALL_CONF" |
     while read package;do
       if [ "$package" = "wpad" ];then
         echo "Getting ready to install full wpad by removing the lite ones"
@@ -47,7 +51,7 @@ opkg update &&
         echo "Installing $package"
         opkg install "$package"
       fi
-    done && STATE="Everything went Ok, reinstall has finished without errors." && opkg list-installed|while read package rest;do if opkg status "$package"|grep -q "Status: install user installed";then echo "$package";fi;done > "$REINSTALL_STATUS"
+    done && STATE="Everything went Ok, reinstall has finished without errors."
 echo  "$STATE"
 /etc/init.d/reinstall disable
 reboot
@@ -55,12 +59,8 @@ reboot
 }
 
 check() {
-if [ ! -f "$REINSTALL_STATUS" ]
-then
-  REINSTALL_STATUS="/dev/null"
-fi
 echo Checking for new installed packages since last reinstall...
-opkg list-installed|while read package rest;do if opkg status "$package"|grep -q "Status: install user installed";then echo "$package";fi;done | while read package rest;do if ! grep -q "^$package" "$REINSTALL_STATUS";then echo "$package";fi;done
+opkg list-installed|while read package rest;do if opkg status "$package"|grep -q "Status: install user installed";then echo "$package";fi;done | while read package rest;do if ! grep -q "^$package$" "$REINSTALL_CONF";then echo "$package";fi;done
 }
 
 chen() {
