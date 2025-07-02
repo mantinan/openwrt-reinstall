@@ -47,7 +47,7 @@ opkg update &&
         echo "Installing $package"
         opkg install "$package"
       fi
-    done && STATE="Everything went Ok, reinstall has finished without errors." && opkg list-installed > "$REINSTALL_STATUS"
+    done && STATE="Everything went Ok, reinstall has finished without errors." && opkg list-installed|while read package rest;do if opkg status "$package"|grep -q "Status: install user installed";then echo "$package";fi;done > "$REINSTALL_STATUS"
 echo  "$STATE"
 /etc/init.d/reinstall disable
 reboot
@@ -58,7 +58,7 @@ check() {
 if [ -f "$REINSTALL_STATUS" ]
 then
   echo Checking for new installed packages since last reinstall...
-  opkg list-installed|while read package rest;do if ! grep -q "^$package" "$REINSTALL_STATUS";then echo $package;fi;done
+  opkg list-installed|while read package rest;do if opkg status "$package"|grep -q "Status: install user installed";then echo "$package";fi;done | while read package rest;do if ! grep -q "^$package" "$REINSTALL_STATUS";then echo "$package";fi;done
 else
   echo "Missing $REINSTALL_STATUS, cannot check, sorry."
 fi
